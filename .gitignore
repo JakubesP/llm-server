@@ -1,0 +1,7 @@
+dist
+node_modules
+.env
+/public/**/*.js
+
+
+/generated/prisma
