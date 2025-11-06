@@ -11,12 +11,21 @@ export async function runOllama(
     ? (prompt as Message[])
     : [{ role: 'user', content: prompt }];
 
+  const generationOptions = {
+    temperature: Number(process.env.TEMPERATURE ?? 1),
+    top_p: Number(process.env.TOP_P ?? 0.95),
+    top_k: Number(process.env.TOP_K ?? 0),
+  };
+
   try {
     if (correlation_id) {
       const stream = await Ollama.chat({
         model,
         // think: false,
-        options: { low_vram: false },
+        options: {
+          low_vram: false,
+          ...generationOptions,
+        },
         messages,
         stream: true,
       });
@@ -42,7 +51,10 @@ export async function runOllama(
     const response = await Ollama.chat({
       model,
       // think: false,
-      options: { low_vram: false },
+      options: {
+        low_vram: false,
+        ...generationOptions,
+      },
       messages,
       stream: false,
     });
