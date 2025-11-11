@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["es2022", "DOM"],
-    "module": "commonjs",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "allowJs": true,
     "sourceMap": true,
