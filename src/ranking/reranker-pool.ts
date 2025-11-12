@@ -1,6 +1,7 @@
 import { Worker } from 'worker_threads';
 import os from 'os';
 import path from 'path';
+import { SCHEDULE_DELAY } from '../constants';
 import { RerankerTask, RerankerResult } from './reranker-worker';
 
 type WorkerState = {
@@ -30,11 +31,16 @@ export class RerankerPool {
    */
   private schedule() {
     const freeWorker = this.workers.find((w) => !w.busy);
-    const nextJob = this.queue.shift();
+    const nextJob = this.queue[0];
 
-    if (!freeWorker || !nextJob) return;
+    if (!nextJob) return;
+    if (!freeWorker)
+      return setTimeout(() => {
+        this.schedule();
+      }, SCHEDULE_DELAY);
 
     freeWorker.busy = true;
+    this.queue.shift();
 
     freeWorker.worker.once('message', (result) => {
       freeWorker.busy = false;
