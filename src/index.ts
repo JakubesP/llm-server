@@ -26,6 +26,28 @@ const apiKeyAuth = (req: any, res: any, next: any) => {
 
 /* Endpoints */
 
+// app.post('/ask', apiKeyAuth, async (req: any, res: any) => {
+//   const { prompt } = req.body;
+//   if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
+
+//   const correlationId = req.query.correlation_id;
+//   const streaming = req.query.streaming === 'true';
+//   if (streaming && !correlationId)
+//     return res.status(400).json({ error: 'Missing correlation id' });
+
+//   try {
+//     res.writeHead(200, { 'Content-Type': 'application/json' });
+//     res.write(' ');
+
+//     const result = await runOllama(prompt, correlationId);
+
+//     res.end(JSON.stringify({ response: result }));
+//   } catch (err) {
+//     console.error(err);
+//     res.end(JSON.stringify({ error: err?.toString() }));
+//   }
+// });
+
 app.post('/ask', apiKeyAuth, async (req: any, res: any) => {
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
