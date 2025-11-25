@@ -57,8 +57,10 @@ app.post('/ask', apiKeyAuth, async (req: any, res: any) => {
   if (streaming && !correlationId)
     return res.status(400).json({ error: 'Missing correlation id' });
 
+  const format = req.query.format;
+
   try {
-    const result = await runOllama(prompt, correlationId);
+    const result = await runOllama(prompt, correlationId, format);
     res.json({ response: result });
   } catch (err) {
     res.status(500).json({ error: err?.toString() });

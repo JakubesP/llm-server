@@ -5,6 +5,7 @@ import { streamToken } from './requests';
 export async function runOllama(
   prompt: string | Message[],
   correlation_id?: string,
+  format: string | undefined = undefined,
   model: string = OLLAMA_MODEL
 ): Promise<string> {
   const messages = Array.isArray(prompt)
@@ -26,6 +27,7 @@ export async function runOllama(
           low_vram: false,
           ...generationOptions,
         },
+        format,
         messages,
         stream: true,
       });
@@ -55,6 +57,7 @@ export async function runOllama(
         low_vram: false,
         ...generationOptions,
       },
+      format,
       messages,
       stream: false,
     });
