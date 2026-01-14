@@ -1,6 +1,13 @@
 import Ollama, { Message } from 'ollama';
 import { streamToken } from './requests';
 
+// Helper to calculate prompt size
+const getPromptSize = (messages: Message[]): number => {
+  return messages.reduce((size, msg) => {
+    return size + (typeof msg.content === 'string' ? msg.content.length : JSON.stringify(msg.content).length);
+  }, 0);
+};
+
 export async function runOllama(
   prompt: string | Message[],
   model: string,
@@ -11,10 +18,19 @@ export async function runOllama(
     ? (prompt as Message[])
     : [{ role: 'user', content: prompt }];
 
+  // Log prompt size for debugging
+  const promptSize = getPromptSize(messages);
+  console.log(`[Ollama] Model: ${model}, Prompt size: ${promptSize} chars, Messages: ${messages.length}`);
+
+  // Get context window size from env or use reasonable defaults
+  const numCtx = Number(process.env.NUM_CTX ?? process.env.CONTEXT_WINDOW ?? 4096);
+  
   const generationOptions = {
     temperature: Number(process.env.TEMPERATURE ?? 1),
     top_p: Number(process.env.TOP_P ?? 0.95),
     top_k: Number(process.env.TOP_K ?? 0),
+    num_ctx: numCtx, // Context window size
+    num_predict: Number(process.env.NUM_PREDICT ?? -1), // -1 = unlimited, or set max tokens
   };
 
   try {
@@ -32,16 +48,20 @@ export async function runOllama(
       });
 
       let response = '';
+      const startTime = Date.now();
 
       for await (const chunk of stream) {
         const content = chunk.message?.content;
         if (content) {
-          await streamToken(correlation_id, content);
+          // Fire and forget - don't await to avoid blocking
+          streamToken(correlation_id, content);
           response += content;
         }
 
         if (chunk.done) {
-          await streamToken(correlation_id);
+          streamToken(correlation_id);
+          const duration = Date.now() - startTime;
+          console.log(`[Ollama] Generation completed in ${duration}ms, Response length: ${response.length}`);
           break;
         }
       }
@@ -49,6 +69,7 @@ export async function runOllama(
       return response;
     }
 
+    const startTime = Date.now();
     const response = await Ollama.chat({
       model,
       // think: false,
@@ -61,7 +82,11 @@ export async function runOllama(
       stream: false,
     });
 
-    return response.message?.content || '';
+    const duration = Date.now() - startTime;
+    const content = response.message?.content || '';
+    console.log(`[Ollama] Generation completed in ${duration}ms, Response length: ${content.length}`);
+
+    return content;
   } catch (err) {
     console.error('Ollama error:', err);
     throw err;
